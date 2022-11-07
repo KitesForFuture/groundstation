@@ -13,3 +13,6 @@ This code runs on the groundstation of the Tailsitter Kite Wind Turbine https://
 
 ## Hardware interface between ESP32 and VESC
 * https://oshwlab.com/benjamin.kutschan/groundstation-vesc6-esp32
+
+## Kite
+* The corresponding Kite for this groundstation can be found at https://github.com/KitesForFuture/kite/tree/figure-eight-2
