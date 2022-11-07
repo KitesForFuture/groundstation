@@ -1,19 +1,12 @@
-# MCPWM servo motor control Example
+# Groundstation
 
-This example will show you how to use MCPWM module to control servo motor
- 
-Assign pulse width range and the maximum degree, accordingly the servo will move from 0 to maximum degree continuously
- 
+This code runs on the groundstation of the Tailsitter Kite Wind Turbine
 
-## Step 1: Pin assignment
-* GPIO18 is assigned as the MCPWM signal for servo motor 
-
-
-## Step 2: Connection
-* connect GPIO18 with servo pwm signal
-* other two wires of servo motor are VCC and GND
+## Step 1: Build and Flash to ESP32
+* Download and in stall espressif ide from https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html
+* Run 'idf.py build' to build the project
+* Run 'idf.py flash' to flash it to an ESP32
 
 
-## Step 3: Initialize MCPWM
-* You need to set the frequency(generally 50 Hz) and duty cycle of MCPWM timer
-* You need to set the MCPWM channel you want to use, and bind the channel with one of the timers
+## Step 2: Flash to VESC
+* Flash the file vesc-code.lisp to your VESC using the VESC-Tool under the the LISP tab inside the 'VESC Dev Tools' section. You probably need the VESC-6 firmware and a VESC-6-compatible hardware.
