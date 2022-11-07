@@ -1,4 +1,4 @@
-# Groundstation
+# Groundstation for the Tailsitter Kite Wind Turbine
 
 This code runs on the groundstation of the Tailsitter Kite Wind Turbine
 
