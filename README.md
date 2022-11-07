@@ -1,6 +1,6 @@
 # Groundstation for the Tailsitter Kite Wind Turbine
 
-This code runs on the groundstation of the Tailsitter Kite Wind Turbine
+This code runs on the groundstation of the Tailsitter Kite Wind Turbine https://www.kitesforfuture.de/tailsitter.pdf
 
 ## Step 1: Build and Flash to ESP32
 * Download and in stall espressif ide from https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html
