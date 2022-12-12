@@ -30,7 +30,7 @@ typedef struct __attribute__((packed)) esp_now_msg_t_large
 	float data[37];
 } esp_now_msg_t_large;
 
-
+//TODO: I think this is not needed anymore, as the groundstation does not receive data from the kite
 static void msg_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 {
 	if (len == sizeof(esp_now_msg_t))
@@ -112,7 +112,7 @@ void network_setup(void)
 	esp_now_register_send_cb(msg_send_cb);
 	
 	// Register Receive Callback
-	esp_now_register_recv_cb(msg_recv_cb);
+	esp_now_register_recv_cb(msg_recv_cb); //TODO: I believe this is not needed anymore.
 }
 
 // used by the kite to send data to the data receiver

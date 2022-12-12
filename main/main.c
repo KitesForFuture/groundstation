@@ -102,7 +102,7 @@ void app_main(void){
 				}else{
 					storeServoArmForEnergyGeneration();
 				}
-			}else if(receive_array_length >= 37){
+			}else if(receive_array_length == 37){
 				sendDataArrayLarge(CONFIG_MODE, receive_array, 37);
 			}
 		}
