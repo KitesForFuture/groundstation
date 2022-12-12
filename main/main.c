@@ -83,12 +83,14 @@ void app_main(void){
 		
 		// pass line length and line tension from UART to WIFI
 		float line_length_raw, flight_mode;
-		while(receiveUART(&line_length_raw, &flight_mode) == 1){
+		float receive_array[100];
+		int receive_array_length;
+		while(receiveUARTArray100(&receive_array, &receive_array_length) == 1){
 			
-			//sendFloatsUART(line_length, line_tension); //TODO: this is for DEBUGGING ONLY
-			/*if(line_length_offset == NOT_INITIALIZED){
-				line_length_offset = line_length_raw;
-			}else{*/
+			if(receive_array_length == 2){
+				line_length_raw = receive_array[0];
+				flight_mode = receive_array[1];
+			
 				line_length = line_length_raw;// - line_length_offset;
 				//printf("received %f, %f\n", line_length_raw, flight_mode);
 				sendData(LINE_LENGTH_MODE, line_length, flight_mode);
@@ -100,8 +102,9 @@ void app_main(void){
 				}else{
 					storeServoArmForEnergyGeneration();
 				}
-				//sendData(DATA_MODE, line_speed, currentServoAngle);
-			//}
+			}else if(receive_array_length >= 37){
+				sendDataArrayLarge(CONFIG_MODE, receive_array, 37);
+			}
 		}
 		
 		// pass line-tension request from WIFI to UART
@@ -110,15 +113,7 @@ void app_main(void){
 			sendUART(3, 0); // request final-landing from VESC
 		}
 		
-		
-		/*else{
-			if(tension_timer != 0 && query_timer_seconds(tension_timer) < 1){
-				sendUART(TENSION_REQUEST, 0);
-			}
-		}
-		*/
 	    vTaskDelay(2.0);
-	    
     }
     
 }

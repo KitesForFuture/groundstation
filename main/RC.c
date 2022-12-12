@@ -5,6 +5,7 @@
 #define DATA_MODE 1
 #define LINE_TENSION_REQUEST_MODE 2
 #define LINE_LENGTH_MODE 3
+#define CONFIG_MODE 4
 
 #define DATALENGTH 2
 
@@ -12,9 +13,8 @@
 static uint8_t broadcast_mac[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 const uint8_t WIFI_CHANNEL = 0;
 
-
-
-
+float receivedData[DATALENGTH] = {0.0, 0.0};//TODO: needed?
+float tension_request = 0;
 
 
 typedef struct __attribute__((packed)) esp_now_msg_t
@@ -24,6 +24,24 @@ typedef struct __attribute__((packed)) esp_now_msg_t
 	// Can put lots of things here
 } esp_now_msg_t;
 
+typedef struct __attribute__((packed)) esp_now_msg_t_large
+{
+	uint32_t mode;
+	float data[37];
+} esp_now_msg_t_large;
+
+
+static void msg_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
+{
+	if (len == sizeof(esp_now_msg_t))
+	{
+		esp_now_msg_t msg;
+		memcpy(&msg, data, len);
+		if(msg.mode == LINE_TENSION_REQUEST_MODE){
+			tension_request = msg.data[0];
+		}
+	}
+}
 
 
 static void msg_send_cb(const uint8_t* mac, esp_now_send_status_t sendStatus)
@@ -92,6 +110,9 @@ void network_setup(void)
 	
 	// Register Send Callback
 	esp_now_register_send_cb(msg_send_cb);
+	
+	// Register Receive Callback
+	esp_now_register_recv_cb(msg_recv_cb);
 }
 
 // used by the kite to send data to the data receiver
@@ -122,6 +143,22 @@ void sendData(uint32_t mode, float data0, float data1){
 	to_be_sent[0] = data0;
 	to_be_sent[1] = data1;
 	sendDataArray(to_be_sent, mode);
+}
+
+
+void sendDataArrayLarge(uint32_t mode, float* data, int length){
+	esp_now_msg_t_large msg;
+	msg.mode = mode;
+	for(int i = 0; i < length; i++){
+		msg.data[i] = data[i];
+	}
+	// Pack
+	uint16_t packet_size = sizeof(esp_now_msg_t_large);
+	uint8_t msg_data[packet_size]; // Byte array
+	memcpy(&msg_data[0], &msg, sizeof(esp_now_msg_t_large));
+	
+	// Send
+	esp_now_send(broadcast_mac, msg_data, packet_size);
 }
 
 
