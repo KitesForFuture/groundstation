@@ -1,4 +1,4 @@
-
+#include "num_config_vars.h"
 #include "timer.c"
 
 #define RC_MODE 0
@@ -27,7 +27,7 @@ typedef struct __attribute__((packed)) esp_now_msg_t
 typedef struct __attribute__((packed)) esp_now_msg_t_large
 {
 	uint32_t mode;
-	float data[37];
+	float data[NUM_CONFIG_FLAOT_VARS];
 } esp_now_msg_t_large;
 
 //TODO: I think this is not needed anymore, as the groundstation does not receive data from the kite
