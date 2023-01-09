@@ -2,6 +2,9 @@
 (define min-eight-line-length 200)
 (define max-eight-line-length 250)
 
+(define launch_command 0)
+(define land_command 1)
+
 (define launch 0)
 (define eight 1)
 (define landing 2)
@@ -15,7 +18,6 @@
 (define counter 10)
 
 (define max-reel-out-tension 10)
-(define landing-request -1)
 
 (uart-start 115200)
 
@@ -43,10 +45,16 @@
         (define num-bytes-read (uart-read array 16))
         (if (> num-bytes-read 15)
             (if (and (= (bufget-f32 array 0) 314) (= (bufget-f32 array 12) 314))
-                ; received something, must be landing request
-                (progn
-                	(define flightmode final-landing)
-                	(define mode motormode)
+                ; received something
+                (if (= (bufget-f32 array 4) land_command)
+                	(progn
+                		(define flightmode final-landing)
+                		(define mode motormode)
+                	)
+                	(
+                		(define flightmode launch)
+                		(define mode generatormode)
+                	)
                 )
             )
         )
