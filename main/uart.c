@@ -80,12 +80,13 @@ int receiveUARTArray100(float* array, int* length, uart_port_t uart_num){
 	while(end_found == 0 && i < num_floats){
 		if(total_array[i] == 314){
 			end_found = 1;
+			i++;
 		}else{
 			i++;
 		}
 	}
 	if(end_found == 0) return 0;
-	*length = i-1;
+	*length = i-2;
 	memcpy(array, total_array+1, (*length)*4);
 	return 1;
 }
