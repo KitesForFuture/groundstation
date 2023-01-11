@@ -65,7 +65,7 @@ int receiveUARTArray100(float* array, int* length, uart_port_t uart_num){
 	memcpy(total_array, data, num_floats*4);
 	if(total_array[0] != 314){
 		//try reversing byte order of floats
-		uint8_t reversed_data[16];
+		uint8_t reversed_data[4*num_floats];
        	//memcpy(e_b, data, 16);
        	for(int i = 0; i < num_floats; i++){
        		for(int j = 0; j < 4; j++){
