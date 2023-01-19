@@ -1,9 +1,9 @@
-(define launch-line-length 180)
-(define min-eight-line-length 200)
-(define max-eight-line-length 250)
+(define launch-line-length 100)
+(define min-eight-line-length 120)
+(define max-eight-line-length 170)
 
-(define launch_command 0)
-(define land_command 1)
+(define launch-command 0.0)
+(define land-command 1.0)
 
 (define launch 0)
 (define eight 1)
@@ -43,15 +43,17 @@
         ; RECEIVE tension-request from kite
         (bufclear array)
         (define num-bytes-read (uart-read array 16))
+        
+        (print num-bytes-read)
         (if (> num-bytes-read 15)
             (if (and (= (bufget-f32 array 0) 314) (= (bufget-f32 array 12) 314))
                 ; received something
-                (if (= (bufget-f32 array 4) land_command)
+                (if (= (bufget-f32 array 4) land-command)
                 	(progn
                 		(define flightmode final-landing)
                 		(define mode motormode)
                 	)
-                	(
+                	(progn
                 		(define flightmode launch)
                 		(define mode generatormode)
                 	)

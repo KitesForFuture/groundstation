@@ -56,7 +56,7 @@ static uint8_t data[RX_BUF_SIZE+1];
 int receiveUARTArray100(float* array, int* length, uart_port_t uart_num){
 	int received_byte_length = 0;
 	uart_get_buffered_data_len(uart_num, (size_t*)&received_byte_length);
-	printf("Length is %d\n", received_byte_length);
+	if(received_byte_length > 0) printf("Length is %d\n", received_byte_length);
 	int num_floats = (received_byte_length)/4;
 	if(num_floats > 102) num_floats = 102;
 	const int rxBytes = uart_read_bytes(uart_num, data, RX_BUF_SIZE+1, 0);

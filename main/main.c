@@ -38,7 +38,7 @@
 #define VESC_UART UART_NUM_1
 #define ESP32_UART UART_NUM_2
 
-#define INTERNET_CONNECTED true
+#define INTERNET_CONNECTED false
 
 #define LAND_COMMAND 0
 #define LAUNCH_COMMAND 1
@@ -69,7 +69,7 @@ void init(){
 	network_setup();
 	
 	// UART TO VESC/STM32
-	initUART(VESC_UART, GPIO_NUM_13, GPIO_NUM_12);
+	initUART(VESC_UART, GPIO_NUM_12, GPIO_NUM_13);
 	// UART TO wifi station/ap ESP32s
 	initUART(UART_NUM_2, GPIO_NUM_18, GPIO_NUM_19);
 	
@@ -99,12 +99,15 @@ void app_main(void){
 		while(receiveUARTArray100(receive_array, &receive_array_length, VESC_UART) == 1){
 			
 			if(receive_array_length == 2){
+				printf("received UART from VESC\n");
 				line_length_raw = receive_array[0];
 				flight_mode = receive_array[1];
 			
 				line_length = line_length_raw;// - line_length_offset;
 				//printf("received %f, %f\n", line_length_raw, flight_mode);
+				printf("sending flight_mode %f and line_length %f to kite\n", flight_mode, line_length);
 				sendData(LINE_LENGTH_MODE, line_length, flight_mode); // send line_length, flight_mode to kite
+				printf("sending flight_mode %f and line_length %f to communication ESP32\n", flight_mode, line_length);
 				sendUART(flight_mode, line_length, ESP32_UART); // send flight_mode to attached ESP32, which forwards it to the internet
 				line_speed = (1-0.125) * line_speed + 0.125 * 50/*frequency*/ * (line_length - last_line_length);
 				last_line_length = line_length;
@@ -121,8 +124,10 @@ void app_main(void){
 		receive_array_length = 0;
 		while(receiveUARTArray100(receive_array, &receive_array_length, ESP32_UART) == 1){
 			if(receive_array_length == 2){ // received from INTERNET
+				printf("Sending landing/launching request to VESC: %f\n", receive_array[0]);
 				sendUART(receive_array[0], 0, VESC_UART); // landing (TODO: launch) COMMAND
 			}else if(receive_array_length == NUM_CONFIG_FLAOT_VARS){ // received from CONFIG TOOL
+				printf("sending config to kite via ESP-NOW\n");
 				sendDataArrayLarge(CONFIG_MODE, receive_array, NUM_CONFIG_FLAOT_VARS); // send CONFIG DATA to KITE via ESP-NOW
 			}
 		}
@@ -130,7 +135,10 @@ void app_main(void){
 		// IF NO INTERNET CONTROLLER CONNECTED, USE MANUAL SWITCH
 		if(!INTERNET_CONNECTED){
 			if(get_level_GPIO_0() != 0){
-				sendUART(3, 0, VESC_UART); // request final-landing from VESC
+				printf("SWITCH request final landing\n");
+				sendUART(1, 0, VESC_UART); // request final-landing from VESC
+			}else{
+				sendUART(0, 0, VESC_UART);
 			}
 		}
 		
