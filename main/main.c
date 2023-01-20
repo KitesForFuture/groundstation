@@ -142,8 +142,8 @@ void app_main(void){
 			}
 		}
 		
-	    
-	    vTaskDelay(2.0);
+	    //sendUART(1, 0, VESC_UART); // request final-landing from VESC
+	    vTaskDelay(5.0);
     }
     
 }
