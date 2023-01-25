@@ -1,9 +1,33 @@
 #define RX_BUF_SIZE (1024)
 
+typedef struct uart_data
+{
+	uart_port_t uart_num;
+	float currentMessage[100];
+	int current_index;
+	int reading;
+	int byteOrderReversed;
+	
+} uart_data;
+
+static uart_data uart[2];
+static int first_uart_already_initialized = false;
+
 //tx_pin/rx_pin = GPIO_NUM_13 ...
 //uart_num = UART_NUM_1 or UART_NUM_2
-void initUART(uart_port_t uart_num, gpio_num_t tx_pin, gpio_num_t rx_pin)
+static void initUART(int number/*either 0 or 1*/, gpio_num_t tx_pin, gpio_num_t rx_pin, int byteOrderReversed)
 {
+	if(first_uart_already_initialized){
+		uart[number].uart_num = UART_NUM_2;
+	}else{
+		uart[number].uart_num = UART_NUM_1;
+		first_uart_already_initialized = true;
+	}
+	
+	uart[number].current_index = 0;
+	uart[number].reading = false;
+	uart[number].byteOrderReversed = byteOrderReversed;
+	
 	uart_config_t uart_config = {
     	.baud_rate = 115200,
     	.data_bits = UART_DATA_8_BITS,
@@ -12,82 +36,99 @@ void initUART(uart_port_t uart_num, gpio_num_t tx_pin, gpio_num_t rx_pin)
     	.flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
     	.source_clk = UART_SCLK_APB,
 	};
-	uart_driver_install(uart_num, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
-    uart_param_config(uart_num, &uart_config);
-    uart_set_pin(uart_num, tx_pin, rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+	uart_driver_install(uart[number].uart_num, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
+    uart_param_config(uart[number].uart_num, &uart_config);
+    uart_set_pin(uart[number].uart_num, tx_pin, rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     
 }
 
-void sendUARTArray100(float* array, int length, uart_port_t uart_num){
+static void reversedByteOrderCopy(float* destinationArray, float* sourceArray, int destinationIndex, int sourceIndex){
+	for(int j = 0; j < 4; j++){
+		memcpy(destinationArray+j + 4*destinationIndex, sourceArray+3-j + 4*sourceIndex, 1);
+	}
+}
+
+void sendUARTArray100(float* array, int length, int number){
 	float d[102];
-	d[0] = 314;
+	d[0] = INFINITY;
 	for(int i = 0; i < length; i++){
 		d[i+1] = array[i];
 	}
-	d[length+1] = 314;
-	
+	d[length+1] = -INFINITY;
+	if(uart[number].byteOrderReversed){
+		printf("!!!Not implemented byte order reversing yet in the function sendUARTArray100!!!\n");
+	}
 	uint8_t to_be_sent[102*4];
 	memcpy(to_be_sent, d, 102*4);
-	uart_write_bytes(uart_num, &to_be_sent, 102*4);
+	uart_write_bytes(uart[number].uart_num, &to_be_sent, 102*4);
 }
 
-void sendUART(float number1, float number2, uart_port_t uart_num){
+void sendUART(float number1, float number2, int number){
 	float d[4];
-    d[0] = 314;
+    d[0] = INFINITY;
     d[1] = number1;
     d[2] = number2;
-    d[3] = 314;
+    d[3] = -INFINITY;
     
-    uint8_t d_b[16];
-    memcpy(d_b, d, 16);
-    uint8_t to_be_sent[16];
+    float r_d[4];
+    
     for(int i = 0; i < 4; i++){
-    	for(int j = 0; j < 4; j++){
-			memcpy(to_be_sent+j + 4*i, d_b+3-j + 4*i, 1);
-		}
+    	if(uart[number].byteOrderReversed){
+    		reversedByteOrderCopy(r_d, d, i, i);
+    	}else{
+    		r_d[i] = d[i];
+    	}
 	}
     
-    uart_write_bytes(uart_num, &to_be_sent, 16);
+    uint8_t to_be_sent[16];
+    memcpy(to_be_sent, r_d, 16);
+    
+    uart_write_bytes(uart[number].uart_num, &to_be_sent, 16);
 }
 
-static uint8_t data[RX_BUF_SIZE+1];
+static uint8_t data[RX_BUF_SIZE];
+static float float_data[RX_BUF_SIZE/4];
 
 
-int receiveUARTArray100(float* array, int* length, uart_port_t uart_num){
-	int received_byte_length = 0;
-	uart_get_buffered_data_len(uart_num, (size_t*)&received_byte_length);
-	if(received_byte_length > 0) printf("Length is %d\n", received_byte_length);
-	int num_floats = (received_byte_length)/4;
-	if(num_floats > 102) num_floats = 102;
-	const int rxBytes = uart_read_bytes(uart_num, data, RX_BUF_SIZE+1, 0);
-	if(rxBytes == 0) return 0;
-	float total_array[102];
-	memcpy(total_array, data, num_floats*4);
-	if(total_array[0] != 314){
-		//try reversing byte order of floats
-		uint8_t reversed_data[4*num_floats];
-       	//memcpy(e_b, data, 16);
-       	for(int i = 0; i < num_floats; i++){
-       		for(int j = 0; j < 4; j++){
-	        	memcpy(reversed_data+j + 4*i, data+3-j + 4*i, 1);
-	       	}
-    	}
-	   	memcpy(total_array, reversed_data, num_floats*4);
-	}
-	if(total_array[0] != 314) return 0;
-	int i = 1;
-	int end_found = 0;
-	while(end_found == 0 && i < num_floats){
-		if(total_array[i] == 314){
-			end_found = 1;
-			i++;
-		}else{
-			i++;
+// returns 0 if reading is waiting for new incoming bytes
+// else returns length of message
+int processUART(int number, float* message){
+	int uart_buffered_data_byte_length = 0;
+	uart_get_buffered_data_len(uart[number].uart_num, (size_t*)&uart_buffered_data_byte_length);
+	int uart_buffered_data_float_length = (uart_buffered_data_byte_length)/4;
+	if(uart_buffered_data_byte_length > RX_BUF_SIZE) uart_buffered_data_byte_length = RX_BUF_SIZE;
+	
+	//READ uart BUFFER
+	//const int number_of_read_bytes = 
+	uart_read_bytes(uart[number].uart_num, data, uart_buffered_data_byte_length, 0);
+	
+	//CONVERT to FLOAT
+	memcpy(float_data, data, uart_buffered_data_float_length*4);
+	
+	for(int i = 0; i < uart_buffered_data_float_length; i++){
+		
+		if(uart[number].reading && float_data[i] == -INFINITY){
+			//DONE READING, message complete, saving message and RETURNING
+			memcpy(message, uart[number].currentMessage, uart[number].current_index*4);
+			uart[number].reading = false;
+			return uart[number].current_index;
+		}
+		if(uart[number].reading){
+			//APPEND to currentMessage
+			if(uart[number].byteOrderReversed){
+				reversedByteOrderCopy(uart[number].currentMessage, float_data, uart[number].current_index, i);
+			}else{
+				uart[number].currentMessage[uart[number].current_index] = float_data[i];
+			}
+			
+			uart[number].current_index += (uart[number].current_index < 99) ? 1 : 0;
+		}else if(float_data[i] == INFINITY){
+			//START READING
+			uart[number].reading = true;
+			uart[number].current_index = 0;
 		}
 	}
-	if(end_found == 0) return 0;
-	*length = i-2;
-	memcpy(array, total_array+1, (*length)*4);
-	return 1;
+	// message not yet complete
+	return 0;
 }
 
