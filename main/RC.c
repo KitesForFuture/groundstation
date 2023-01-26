@@ -28,7 +28,7 @@ typedef struct __attribute__((packed)) esp_now_msg_t
 typedef struct __attribute__((packed)) esp_now_msg_t_large
 {
 	uint32_t mode;
-	float data[NUM_CONFIG_FLAOT_VARS];
+	float data[NUM_CONFIG_FLOAT_VARS];
 } esp_now_msg_t_large;
 
 //TODO: I think this is not needed anymore, as the groundstation does not receive data from the kite

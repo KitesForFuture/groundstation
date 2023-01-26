@@ -64,9 +64,9 @@ void storeServoArmForEnergyGeneration(){
 void processReceivedConfigValuesViaWiFi(float* config_values){
 	//TODO: send UART with config values
 	if(internet_connected){
-		sendDataArrayLarge(CONFIG_MODE, config_values, NUM_CONFIG_FLAOT_VARS); // ECHO the config array
+		sendDataArrayLarge(CONFIG_MODE, config_values, NUM_CONFIG_FLOAT_VARS); // ECHO the config array
 	}else{
-		sendUARTArray100(config_values, NUM_CONFIG_FLAOT_VARS, ESP32_UART); // FORWARD config to access point ESP32
+		sendUARTArray100(config_values, NUM_CONFIG_FLOAT_VARS, ESP32_UART); // FORWARD config to access point ESP32
 	}
 }
 
@@ -140,9 +140,9 @@ void app_main(void){
 			printf("Sending landing/launching request to VESC: %f\n", receive_array[0]);
 			sendUART(receive_array[0], 0, VESC_UART); // landing (TODO: launch) COMMAND
 			internet_connected = true;
-		}else if(receive_array_length == NUM_CONFIG_FLAOT_VARS){ // received from CONFIG TOOL
+		}else if(receive_array_length == NUM_CONFIG_FLOAT_VARS){ // received from CONFIG TOOL
 			printf("sending config to kite via ESP-NOW\n");
-			sendDataArrayLarge(CONFIG_MODE, receive_array, NUM_CONFIG_FLAOT_VARS); // *** FORWARD of CONFIG ARRAY from UART to ESP-NOW
+			sendDataArrayLarge(CONFIG_MODE, receive_array, NUM_CONFIG_FLOAT_VARS); // *** FORWARD of CONFIG ARRAY from UART to ESP-NOW
 		}
 		
 		// **************** MANUAL SWITCH ****************

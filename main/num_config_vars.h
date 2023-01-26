@@ -1,2 +1,2 @@
-#define NUM_CONFIG_FLAOT_VARS 40
-#define NUM_CONFIG_FLAOT_VARS_string "40"
+#define NUM_CONFIG_FLOAT_VARS 40
+#define NUM_CONFIG_FLOAT_VARS_string "40"
