@@ -63,9 +63,12 @@ void storeServoArmForEnergyGeneration(){
 
 void processReceivedConfigValuesViaWiFi(float* config_values){
 	//TODO: send UART with config values
+	printf("Received config over ESP-NOW.\n");
 	if(internet_connected){
+		printf("ECHOING back to ESP-NOW, because INTERNET_CONTROL ESP is connected");
 		sendDataArrayLarge(CONFIG_MODE, config_values, NUM_CONFIG_FLOAT_VARS); // ECHO the config array
 	}else{
+		printf("FORWARDING as UART on PIN 18\n");
 		sendUARTArray100(config_values, NUM_CONFIG_FLOAT_VARS, ESP32_UART); // FORWARD config to access point ESP32
 	}
 }
