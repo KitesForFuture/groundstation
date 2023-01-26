@@ -38,10 +38,10 @@
 #define VESC_UART 0
 #define ESP32_UART 1
 
-#define INTERNET_CONNECTED false
-
 #define LAND_COMMAND 0
 #define LAUNCH_COMMAND 1
+
+int internet_connected = false;
 
 float currentServoAngle = SERVO_MIN_ANGLE;
 float direction = 1;
@@ -61,17 +61,27 @@ void storeServoArmForEnergyGeneration(){
 }
 
 
+void processReceivedConfigValuesViaWiFi(float* config_values){
+	//TODO: send UART with config values
+	if(internet_connected){
+		sendDataArrayLarge(CONFIG_MODE, config_values, NUM_CONFIG_FLAOT_VARS); // ECHO the config array
+	}else{
+		sendUARTArray100(config_values, NUM_CONFIG_FLAOT_VARS, ESP32_UART); // FORWARD config to access point ESP32
+	}
+}
+
 void init(){
 	initMotors(); // servo (pwm) outputs
 	storeServoArmForEnergyGeneration();
 	//networking
 	//setRole(GROUND_STATION);
-	network_setup();
 	
 	// UART TO VESC/STM32
 	initUART(VESC_UART, GPIO_NUM_12, GPIO_NUM_13, true);
 	// UART TO wifi station/ap ESP32s
 	initUART(ESP32_UART, GPIO_NUM_18, GPIO_NUM_19, false);
+	
+	network_setup(&processReceivedConfigValuesViaWiFi);
 	
 	initGPIO();
 	
@@ -93,19 +103,10 @@ void app_main(void){
 	int receive_array_length = 0;
 	float line_length_raw, flight_mode;
 	
-	
-	float message[100];
-	
 	while(1){
-		int length_of_message = processUART(VESC_UART, message);
-		//printf("message length = %d\n", length_of_message);
-		if(length_of_message > 0){
-			printf("received message [%f, %f, %f, ..., %f]\n", message[0], message[1], message[2], message[39]);
-		}
-		vTaskDelay(5);
-	}
-	
-	while(1){
+		
+		// **************** REACT to UART message from VESC ****************
+		
 		// pass line length and line tension from UART to WIFI
 		receive_array_length = processUART(VESC_UART, receive_array);
 		if(receive_array_length == 2){
@@ -118,7 +119,9 @@ void app_main(void){
 			printf("sending flight_mode %f and line_length %f to kite\n", flight_mode, line_length);
 			sendData(LINE_LENGTH_MODE, line_length, flight_mode); // send line_length, flight_mode to kite
 			printf("sending flight_mode %f and line_length %f to communication ESP32\n", flight_mode, line_length);
-			sendUART(flight_mode, line_length, ESP32_UART); // send flight_mode to attached ESP32, which forwards it to the internet
+			if(internet_connected){
+				sendUART(flight_mode, line_length, ESP32_UART); // send flight_mode to attached ESP32, which forwards it to the internet
+			}
 			line_speed = (1-0.125) * line_speed + 0.125 * 50/*frequency*/ * (line_length - last_line_length);
 			last_line_length = line_length;
 			//printf("line_speed = %f, line_length = %f\n", line_speed, line_length);
@@ -129,18 +132,22 @@ void app_main(void){
 			}
 		}
 		
+		// **************** REACT to UART message from ESP32 ****************
+		
 		// receiving from attached ESP32 via UART
 		receive_array_length = processUART(ESP32_UART, receive_array);
 		if(receive_array_length == 2){ // received from INTERNET
 			printf("Sending landing/launching request to VESC: %f\n", receive_array[0]);
 			sendUART(receive_array[0], 0, VESC_UART); // landing (TODO: launch) COMMAND
+			internet_connected = true;
 		}else if(receive_array_length == NUM_CONFIG_FLAOT_VARS){ // received from CONFIG TOOL
 			printf("sending config to kite via ESP-NOW\n");
-			sendDataArrayLarge(CONFIG_MODE, receive_array, NUM_CONFIG_FLAOT_VARS); // send CONFIG DATA to KITE via ESP-NOW
+			sendDataArrayLarge(CONFIG_MODE, receive_array, NUM_CONFIG_FLAOT_VARS); // *** FORWARD of CONFIG ARRAY from UART to ESP-NOW
 		}
 		
-		// IF NO INTERNET CONTROLLER CONNECTED, USE MANUAL SWITCH
-		if(!INTERNET_CONNECTED){
+		// **************** MANUAL SWITCH ****************
+		
+		if(!internet_connected){
 			if(get_level_GPIO_0() != 0){
 				printf("SWITCH request final landing\n");
 				sendUART(1, 0, VESC_UART); // request final-landing from VESC

@@ -16,6 +16,7 @@ const uint8_t WIFI_CHANNEL = 0;
 float receivedData[DATALENGTH] = {0.0, 0.0};//TODO: needed?
 float tension_request = 0;
 
+static void (*receive_config_callback)(float*);
 
 typedef struct __attribute__((packed)) esp_now_msg_t
 {
@@ -39,6 +40,15 @@ static void msg_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 		memcpy(&msg, data, len);
 		if(msg.mode == LINE_TENSION_REQUEST_MODE){
 			tension_request = msg.data[0];
+		}
+	}
+	
+	if (len == sizeof(esp_now_msg_t_large))
+	{
+		esp_now_msg_t_large msg;
+		memcpy(&msg, data, len);
+		if(msg.mode == CONFIG_MODE){
+			(*receive_config_callback)(msg.data);
 		}
 	}
 }
@@ -66,8 +76,9 @@ static void msg_send_cb(const uint8_t* mac, esp_now_send_status_t sendStatus)
 
 // init wifi on the esp
 // register callbacks
-void network_setup(void)
+void network_setup(void (*received_config_callback_arg)(float*))
 {
+	receive_config_callback = received_config_callback_arg;
 	//TODO: check if neccessary when WIFI_STORAGE_RAM is used
 	// Initialize FS NVS
     esp_err_t ret = nvs_flash_init();
