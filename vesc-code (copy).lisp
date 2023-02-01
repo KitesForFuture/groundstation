@@ -42,10 +42,10 @@
                 (define uart-send-counter 20)
                 (define line-length (- 0 (- (get-dist) offset) ) )
                 ; SEND line-length AND line tension(current)
-                (bufset-f32 arr 0 1234567.0)
+                (bufset-f32 arr 0 single-float-positive-infinity)
                 (bufset-f32 arr 4 line-length)
                 (bufset-f32 arr 8 flightmode)
-                (bufset-f32 arr 12 -1234567.0)
+                (bufset-f32 arr 12 single-float-negative-infinity)
                 (uart-write arr)
             )
         )
@@ -56,7 +56,7 @@
         
         ;(print num-bytes-read)
         (if (> num-bytes-read 15)
-            (if (and (= (bufget-f32 array 0) 1234567.0) (= (bufget-f32 array 12) -1234567.0))
+            (if (and (= (bufget-f32 array 0) single-float-positive-infinity) (= (bufget-f32 array 12) single-float-negative-infinity))
                 ; received something
                 (progn
                     ;(print (bufget-f32 array 4))

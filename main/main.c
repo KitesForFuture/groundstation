@@ -55,7 +55,7 @@ void controlServoAngle(float reel_in_speed){
 }
 
 void storeServoArmForEnergyGeneration(){
-	setAngle(2, -90);
+	setAngle(2, -70);
 	currentServoAngle = SERVO_MIN_ANGLE;
 	direction = 1;
 }
@@ -107,7 +107,8 @@ void app_main(void){
 	float line_length_raw, flight_mode;
 	
 	while(1){
-		
+		//sendUART(1, 2, VESC_UART);//DEBUGGING
+		//sendUART(1, 2, ESP32_UART);//DEBUGGING
 		// **************** REACT to UART message from VESC ****************
 		
 		// pass line length and line tension from UART to WIFI

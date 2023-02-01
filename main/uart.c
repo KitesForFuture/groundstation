@@ -42,19 +42,27 @@ static void initUART(int uart_number/*either 0 or 1*/, gpio_num_t tx_pin, gpio_n
     
 }
 
+uint8_t source[4];
+uint8_t destination[4];
+
 static void reversedByteOrderCopy(float* destinationArray, float* sourceArray, int destinationIndex, int sourceIndex){
+	
+	memcpy(source, sourceArray+sourceIndex, 4);
+	
 	for(int j = 0; j < 4; j++){
-		memcpy(destinationArray+j + 4*destinationIndex, sourceArray+3-j + 4*sourceIndex, 1);
+		memcpy(destination+j, source+3-j, 1);
+		//memcpy(destinationArray+j + 4*destinationIndex, sourceArray+3-j + 4*sourceIndex, 1);
 	}
+	memcpy(destinationArray + destinationIndex, destination, 4);
 }
 
 void sendUARTArray100(float* array, int length, int uart_number){
 	float d[102];
-	d[0] = INFINITY;
+	d[0] = 1234567;
 	for(int i = 0; i < length; i++){
 		d[i+1] = array[i];
 	}
-	d[length+1] = -INFINITY;
+	d[length+1] = -1234567;
 	if(uart[uart_number].byteOrderReversed){
 		printf("!!!Not implemented byte order reversing yet in the function sendUARTArray100!!!\n");
 	}
@@ -65,10 +73,10 @@ void sendUARTArray100(float* array, int length, int uart_number){
 
 void sendUART(float number1, float number2, int uart_number){
 	float d[4];
-    d[0] = INFINITY;
+    d[0] = 1234567;
     d[1] = number1;
     d[2] = number2;
-    d[3] = -INFINITY;
+    d[3] = -1234567;
     
     float r_d[4];
     
@@ -95,9 +103,10 @@ static float float_data[RX_BUF_SIZE/4];
 int processUART(int uart_number, float* message){
 	int uart_buffered_data_byte_length = 0;
 	uart_get_buffered_data_len(uart[uart_number].uart_num, (size_t*)&uart_buffered_data_byte_length);
+	//printf("received buffer len = %d\n", uart_buffered_data_byte_length);
 	int uart_buffered_data_float_length = (uart_buffered_data_byte_length)/4;
 	if(uart_buffered_data_byte_length > RX_BUF_SIZE) uart_buffered_data_byte_length = RX_BUF_SIZE;
-	
+	//printf("uart = %d\n", uart_number);
 	//READ uart BUFFER
 	//const int number_of_read_bytes = 
 	uart_read_bytes(uart[uart_number].uart_num, data, uart_buffered_data_byte_length, 0);
@@ -107,7 +116,15 @@ int processUART(int uart_number, float* message){
 	
 	for(int i = 0; i < uart_buffered_data_float_length; i++){
 		
-		if(uart[uart_number].reading && float_data[i] == -INFINITY){
+		
+		float possibly_reversed_float = float_data[i];
+		if(uart[uart_number].byteOrderReversed) {
+			reversedByteOrderCopy(&possibly_reversed_float, float_data, 0, i);
+			//printf("reversing byte order from %f to %f\n", float_data[i], possibly_reversed_float);
+		}
+		//printf("float_data[%d] = %f, ", i, possibly_reversed_float);
+		
+		if(uart[uart_number].reading && possibly_reversed_float == -1234567){
 			//DONE READING, message complete, saving message and RETURNING
 			memcpy(message, uart[uart_number].currentMessage, uart[uart_number].current_index*4);
 			uart[uart_number].reading = false;
@@ -115,14 +132,10 @@ int processUART(int uart_number, float* message){
 		}
 		if(uart[uart_number].reading){
 			//APPEND to currentMessage
-			if(uart[uart_number].byteOrderReversed){
-				reversedByteOrderCopy(uart[uart_number].currentMessage, float_data, uart[uart_number].current_index, i);
-			}else{
-				uart[uart_number].currentMessage[uart[uart_number].current_index] = float_data[i];
-			}
+			uart[uart_number].currentMessage[uart[uart_number].current_index] = possibly_reversed_float;
 			
 			uart[uart_number].current_index += (uart[uart_number].current_index < 99) ? 1 : 0;
-		}else if(float_data[i] == INFINITY){
+		}else if(possibly_reversed_float == 1234567){
 			//START READING
 			uart[uart_number].reading = true;
 			uart[uart_number].current_index = 0;
