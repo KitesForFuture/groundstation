@@ -73,6 +73,11 @@ void processReceivedConfigValuesViaWiFi(float* config_values){
 	}
 }
 
+void processReceivedDebuggingDataViaWiFi(float* debugging_data){
+	printf("forwarding Debugging data to in_flight_config ESP32");
+	sendUARTArray100(debugging_data, 6, ESP32_UART);
+}
+
 void init(){
 	initMotors(); // servo (pwm) outputs
 	storeServoArmForEnergyGeneration();
@@ -84,7 +89,7 @@ void init(){
 	// UART TO wifi station/ap ESP32s
 	initUART(ESP32_UART, GPIO_NUM_18, GPIO_NUM_19, false);
 	
-	network_setup(&processReceivedConfigValuesViaWiFi);
+	network_setup(&processReceivedConfigValuesViaWiFi, &processReceivedDebuggingDataViaWiFi);
 	
 	initGPIO();
 	

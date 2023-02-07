@@ -17,6 +17,7 @@ float receivedData[DATALENGTH] = {0.0, 0.0};//TODO: needed?
 float tension_request = 0;
 
 static void (*receive_config_callback)(float*);
+static void (*receive_debugging_data_callback)(float*);
 
 typedef struct __attribute__((packed)) esp_now_msg_t
 {
@@ -30,6 +31,12 @@ typedef struct __attribute__((packed)) esp_now_msg_t_large
 	uint32_t mode;
 	float data[NUM_CONFIG_FLOAT_VARS];
 } esp_now_msg_t_large;
+
+typedef struct __attribute__((packed)) esp_now_msg_t_medium
+{
+	uint32_t mode;
+	float data[6];
+} esp_now_msg_t_medium;
 
 //TODO: I think this is not needed anymore, as the groundstation does not receive data from the kite
 static void msg_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
@@ -50,6 +57,13 @@ static void msg_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 		if(msg.mode == CONFIG_MODE){
 			(*receive_config_callback)(msg.data);
 		}
+	}
+	
+	if (len == sizeof(esp_now_msg_t_medium)){
+		esp_now_msg_t_medium msg;
+		memcpy(&msg, data, len);
+		(*receive_debugging_data_callback)(msg.data);
+		
 	}
 }
 
@@ -76,9 +90,10 @@ static void msg_send_cb(const uint8_t* mac, esp_now_send_status_t sendStatus)
 
 // init wifi on the esp
 // register callbacks
-void network_setup(void (*received_config_callback_arg)(float*))
+void network_setup(void (*received_config_callback_arg)(float*), void (*receive_debugging_data_callback_arg)(float*))
 {
 	receive_config_callback = received_config_callback_arg;
+	receive_debugging_data_callback = receive_debugging_data_callback_arg;
 	//TODO: check if neccessary when WIFI_STORAGE_RAM is used
 	// Initialize FS NVS
     esp_err_t ret = nvs_flash_init();

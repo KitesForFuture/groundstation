@@ -1,6 +1,6 @@
-(define launch-line-length 100)
-(define min-eight-line-length 120)
-(define max-eight-line-length 150)
+(define launch-line-length 180)
+(define min-eight-line-length 200)
+(define max-eight-line-length 230)
 
 (define launch-command 0.0)
 (define land-command 1.0)
