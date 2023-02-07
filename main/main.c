@@ -110,7 +110,7 @@ void app_main(void){
 	float receive_array[100];
 	int receive_array_length = 0;
 	float line_length_raw, flight_mode;
-	
+	printf("waiting for UART...\n");
 	while(1){
 		//sendUART(1, 2, VESC_UART);//DEBUGGING
 		//sendUART(1, 2, ESP32_UART);//DEBUGGING
