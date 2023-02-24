@@ -1,4 +1,5 @@
 # Groundstation for the Tailsitter Kite Wind Turbine
+# [DEPRECATED, now merged into https://github.com/KitesForFuture/powerplant]
 
 This code runs on the groundstation of the Tailsitter Kite Wind Turbine https://www.kitesforfuture.de/tailsitter.pdf
 

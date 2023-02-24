@@ -112,7 +112,7 @@
                     (if (= flightmode eight)
                         (progn
                             (print "REEL IN while Eight")
-                            (set-current 5)
+                            (set-current 9)
                         )
                         ; flightmode = landing or final-landing
                         (if (> line-length 30)

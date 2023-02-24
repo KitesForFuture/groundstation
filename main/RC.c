@@ -41,7 +41,7 @@ typedef struct __attribute__((packed)) esp_now_msg_t_medium
 //TODO: I think this is not needed anymore, as the groundstation does not receive data from the kite
 static void msg_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 {
-	//printf("received esp-now message of size %d\n", len);
+	printf("received esp-now message of size %d\n", len);
 	if (len == sizeof(esp_now_msg_t))
 	{
 		esp_now_msg_t msg;
