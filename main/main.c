@@ -87,7 +87,7 @@ void init(){
 	// UART TO VESC/STM32
 	initUART(VESC_UART, GPIO_NUM_12, GPIO_NUM_13, true);
 	// UART TO wifi station/ap ESP32s
-	initUART(ESP32_UART, GPIO_NUM_18, GPIO_NUM_19, false);
+	initUART(ESP32_UART, GPIO_NUM_16, GPIO_NUM_17, false);
 	
 	network_setup(&processReceivedConfigValuesViaWiFi, &processReceivedDebuggingDataViaWiFi);
 	
